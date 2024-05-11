@@ -1,0 +1,148 @@
+# Packer Template to create an Image
+
+# Resource Definition for the VM Template
+source "proxmox" "ubuntu-server" {
+
+    # Proxmox Connection Settings
+    proxmox_url = "{{ config.proxmox_api_url }}"
+    username = "{{ config.proxmox_api_token_id }}"
+    token = "{{ config.proxmox_api_token_secret }}"
+    insecure_skip_tls_verify = "false"
+
+    # VM General Settings
+    node = "{{ node.node_name }}"
+    vm_id = "{{ node.vm_id }}"
+    vm_name = "{{ config.template_name }}"
+    tags = "{{ config.tags }}"
+    template_description = "{{ config.template_description }}"
+
+    # VM OS Settings
+    iso_file = "{{ config.iso_file }}"
+    iso_storage_pool = "{{ config.iso_storage_pool }}"
+    unmount_iso = true
+
+    # VM System Settings
+    qemu_agent = true
+
+    # VM Hard Disk Settings
+    scsi_controller = "virtio-scsi-pci"
+
+    disks {
+        disk_size = "{{ config.disk_size }}"
+        format = "raw"
+        storage_pool = "{{ config.storage_pool }}"
+        storage_pool_type = "{{ config.storage_pool_type }}"
+        type = "virtio"
+    }
+
+    # VM CPU Settings
+    cores = "{{ config.cores }}"
+
+    # VM Memory Settings
+    memory = "{{ config.memory }}"
+
+    # VM Network Settings
+    network_adapters {
+        model = "virtio"
+        bridge = "{{ config.network_bridge }}"
+        firewall = "false"
+    }
+
+    # VM Cloud-Init Settings
+    cloud_init = true
+    cloud_init_storage_pool = "{{ config.storage_pool }}"
+
+    # PACKER Boot Commands
+    {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
+  {% raw %}
+    boot_command = [
+        "<esc><wait><esc><wait>",
+        "<f6><wait><esc><wait>",
+        "<wait>",
+        "<bs><bs><bs><bs><bs>",
+        "<wait>",
+        "autoinstall ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ ",
+        "--- <enter>"
+    ]
+  {% endraw %}
+    {% elif config.ubuntu_version == 'ubuntu-22-04-server' %}
+        {% raw %}
+    boot_command = [
+        "c<wait>",
+        "linux /casper/vmlinuz --- autoinstall ds='nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/' ",
+        "<enter><wait>",
+        "initrd /casper/initrd",
+        "<enter><wait>",
+        "boot",
+        "<enter>"
+    ]
+        {% endraw %}
+    {% endif %}
+
+
+    boot = "c"
+    boot_wait = "5s"
+
+    # PACKER Autoinstall Settings
+    http_directory = "http"
+    # (Optional) Bind IP Address and Port
+    http_bind_address = "{{ config.packer_bind_address }}"
+    http_port_min = 8802
+    http_port_max = 8802
+
+    {% if config.ssh_username != None %}
+    # ssh username
+    ssh_username = "{{ config.ssh_username }}"
+    # Private SSH KEY file here
+    ssh_private_key_file = "{{ config.path_to_ssh_key_file }}"
+
+    # Raise the timeout, when installation takes longer
+    ssh_timeout = "20m"
+    {% endif %}
+}
+
+# Build Definition to create the VM Template
+build {
+
+    name = "ubuntu-server"
+    sources = ["source.proxmox.ubuntu-server"]
+
+    # Provisioning the VM Template for Cloud-Init Integration in Proxmox #1
+    provisioner "shell" {
+        inline = [
+        {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
+            "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
+        {% endif %}
+        {% if config.ubuntu_version == 'ubuntu-22-04-server' %}
+            "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
+            "NET_IFACE=$(ls /sys/class/net | grep -v lo | head -n 1)",
+            "sudo bash -c \"cat <<EOT > /etc/netplan/01-netcfg.yaml\nnetwork:\n  version: 2\n  renderer: networkd\n  ethernets:\n    $NET_IFACE:\n      dhcp4: true\nEOT\"",
+            "sudo netplan apply",
+        {% endif %}
+            "sudo rm /etc/ssh/ssh_host_*",
+            "sudo truncate -s 0 /etc/machine-id",
+            "sudo apt -y autoremove --purge",
+            "sudo apt -y clean",
+            "sudo apt -y autoclean",
+            "sudo cloud-init clean --logs",
+        {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
+            "sudo rm -f /etc/cloud/cloud.cfg.d/subiquity-disable-cloudinit-networking.cfg",
+        {% endif %}
+            "sudo sync"
+        ]
+    }
+
+    # Provisioning the VM Template for Cloud-Init Integration in Proxmox #2
+    provisioner "file" {
+        source = "files/99-pve.cfg"
+        destination = "/tmp/99-pve.cfg"
+    }
+
+    # Provisioning the VM Template for Cloud-Init Integration in Proxmox #3
+    provisioner "shell" {
+        inline = [ "sudo cp /tmp/99-pve.cfg /etc/cloud/cloud.cfg.d/99-pve.cfg" ]
+    }
+
+    # Add additional provisioning scripts here
+    # ...
+}

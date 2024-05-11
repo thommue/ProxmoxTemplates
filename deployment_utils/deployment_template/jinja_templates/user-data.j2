@@ -1,0 +1,35 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US
+  keyboard:
+    layout: {{ config.keyboard_layout }}
+  refresh-installer:
+    update: false
+  ssh:
+    install-server: true
+    allow-pw: true
+    disable_root: true
+    ssh_quiet_keygen: true
+    allow_public_ssh_keys: true
+  packages:
+    - sudo
+  storage:
+    layout:
+      name: direct
+    swap:
+      size: 0
+  user-data:
+    package_upgrade: false
+    timezone: {{ config.timezone }}
+    users:
+      - name: {{ config.ssh_username }}
+        groups: [adm, sudo]
+        lock-passwd: false
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        ssh_authorized_keys:
+          - {{ config.ssh_public_key }}
+  late-commands:
+    - curtin in-target -- apt-get update
+    - curtin in-target -- apt-get install qemu-guest-agent

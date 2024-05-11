@@ -1,8 +1,34 @@
-import time
+import logging
 import streamlit as st
 from proxmoxer import ProxmoxAPI
+from contextlib import contextmanager
+from deployment_utils.deployment import deployment
 from deployment_utils.create_obj import PackerConfig, ProxmoxNode
 from proxmox_utils.utils import get_local_isos, get_network_bridges
+
+
+class StreamlitHandler(logging.Handler):
+    def __init__(self, placeholder):
+        super().__init__()
+        self.placeholder = placeholder
+        self.log_message = ""
+
+    def emit(self, record):
+        message = self.format(record)
+        self.log_message += message + "\n"
+        self.placeholder.text(self.log_message)
+
+@contextmanager
+def streamlit_logger(placeholder):
+    handler = StreamlitHandler(placeholder)
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+    try:
+        yield
+    finally:
+        logger.removeHandler(handler)
+
 
 # set a title / Header
 st.title("Proxmox Template Wizard with Packer 🚀")
@@ -20,6 +46,8 @@ if 'proxmox_api_token_name' not in st.session_state:
     st.session_state.proxmox_api_token_name = ""
 if 'proxmox_api_token_secret' not in st.session_state:
     st.session_state.proxmox_api_token_secret = ""
+if 'verify_ssl' not in st.session_state:
+    st.session_state.verify_ssl = False
 if 'proxmox_nodes' not in st.session_state:
     st.session_state.proxmox_nodes = []
 if 'local_isos' not in st.session_state:
@@ -40,10 +68,11 @@ def handle_form_submit() -> None:
         st.session_state.proxmox_user = proxmox_user
         st.session_state.proxmox_api_token_name = proxmox_api_token_name
         st.session_state.proxmox_api_token_secret = proxmox_api_token_secret
+        st.session_state.verify_ssl = verify_ssl
         st.session_state.proxmox_nodes = proxmox.nodes.get()
         st.session_state.local_isos = get_local_isos(proxmox)
         st.session_state.network_bridges = get_network_bridges(proxmox)
-        st.experimental_rerun()
+        st.rerun()
     else:
         st.error("Please fill out all the fields to enable the submit button.")
 
@@ -55,8 +84,8 @@ def check_state(requred_field, optional_ssh_fields) -> PackerConfig:
         st.error("Please fill out all the fields to create the template.")
     else:
         packer_conf = PackerConfig(
-            template_folder="test",
-            proxmox_api_url=f"https://{st.session_state.proxmox_url}/api2/json",
+            ubuntu_version=ubuntu_os_version,
+            proxmox_api_url=f"https://{st.session_state.proxmox_url}:8006/api2/json",
             proxmox_api_token_id=f"{st.session_state.proxmox_user}!{st.session_state.proxmox_api_token_name}",
             proxmox_api_token_secret=st.session_state.proxmox_api_token_secret,
             template_name=template_name,
@@ -73,7 +102,8 @@ def check_state(requred_field, optional_ssh_fields) -> PackerConfig:
             proxmox_nodes=[ProxmoxNode(node_name=selected_node, vm_id=template_id + i) for i, selected_node in enumerate(selected_nodes)],
             tags=template_tags,
             keyboard_layout=keyboard_layout,
-            timezone=timezone
+            timezone=timezone,
+            tls_verification="true" if st.session_state.verify_ssl else "false"
         )
         if optional_ssh_fields:
             packer_conf.ssh_username = ssh_username
@@ -126,7 +156,7 @@ if st.session_state.form_submitted and not st.session_state.form2_submitted:
             node_choices,
             placeholder="Choose nodes..."
         )
-
+        ubuntu_os_version = st.selectbox("Select the ubuntu os version", ["ubuntu-20-04-server", "ubuntu-22-04-server"], placeholder="ubuntu-20-04, ...")
         template_id = st.number_input("Template VM ID (the id will incrementally increase):", min_value=1, max_value=999, placeholder="900")
         template_name = st.text_input("Template name", placeholder="template-ubuntu-22-04")
         template_description = st.text_input("Template description", placeholder="Ubuntu 22.04 template ....")
@@ -155,7 +185,7 @@ if st.session_state.form_submitted and not st.session_state.form2_submitted:
         path_to_ssh_key_file = st.text_input("Path to your local ssh key file", placeholder="~/.ssh/homelab")
         ssh_public_key = st.text_input("Your public ssh key", placeholder="ssh-rsa xxxxxx")
 
-        packages = st.multiselect("Preinstall on template: ", ["docker", "docker-compose"], placeholder="Select what you want...")
+        packages = st.multiselect("Preinstall on template: ", ["None", "docker", "docker-compose"], placeholder="Select what you want...")
 
         # Check if all required fields are filled
         all_required_fields_filled = selected_nodes and template_id and template_name and template_description and template_tags and template_iso and disk_size and cores and keyboard_layout and memory and bridge and timezone
@@ -166,6 +196,11 @@ if st.session_state.form_submitted and not st.session_state.form2_submitted:
         template_submit = st.form_submit_button("Create Template(s)")
 
     if template_submit:
-        with st.spinner("Establishing the connection to proxmox..."):
-            conf = check_state(all_required_fields_filled, all_shh_fields)
-            print(conf)
+        placeholder = st.empty()
+        with placeholder:
+            with st.spinner("Packer Deployment in progress..."):
+                with streamlit_logger(placeholder):
+                    conf = check_state(all_required_fields_filled, all_shh_fields)
+                    deployment(conf=conf)
+                    st.success("Template was successfully created!")
+

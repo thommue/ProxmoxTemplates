@@ -8,7 +8,7 @@ class ProxmoxNode(BaseModel):
 
 
 class PackerConfig(BaseModel):
-    template_folder: str
+    ubuntu_version: str
     proxmox_api_url: str
     proxmox_api_token_id: str
     proxmox_api_token_secret: str
@@ -30,3 +30,4 @@ class PackerConfig(BaseModel):
     tags: str
     keyboard_layout: str
     timezone: str
+    tls_verification: str

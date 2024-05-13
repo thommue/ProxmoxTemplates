@@ -65,7 +65,7 @@ source "proxmox" "ubuntu-server" {
         "--- <enter>"
     ]
   {% endraw %}
-    {% elif config.ubuntu_version == 'ubuntu-22-04-server' %}
+    {% elif config.ubuntu_version == 'ubuntu-22-04-server-single' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' %}
         {% raw %}
     boot_command = [
         "c<wait>",
@@ -113,10 +113,12 @@ build {
         {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
             "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
         {% endif %}
-        {% if config.ubuntu_version == 'ubuntu-22-04-server' %}
+        {% if config.ubuntu_version == 'ubuntu-22-04-server-single' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' %}
             "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
             "NET_IFACE=$(ls /sys/class/net | grep -v lo | head -n 1)",
+            {% if config.ubuntu_version == 'ubuntu-22-04-server-single' %}
             "sudo bash -c \"cat <<EOT > /etc/netplan/01-netcfg.yaml\nnetwork:\n  version: 2\n  renderer: networkd\n  ethernets:\n    $NET_IFACE:\n      dhcp4: true\nEOT\"",
+            {% endif %}
             "sudo netplan apply",
         {% endif %}
             "sudo rm /etc/ssh/ssh_host_*",
@@ -144,5 +146,18 @@ build {
     }
 
     # Add additional provisioning scripts here
-    # ...
+    provisioner "shell" {
+        inline = [
+            "sudo apt-get -y update",
+        {% if "docker & docker-compose" in conf.additional_packages %}
+            "sudo sysctl --system",
+            "sudo apt-get install -y ca-certificates curl gnupg",
+            "sudo install -m 0755 -d /etc/apt/keyrings",
+            "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
+            "sudo chmod a+r /etc/apt/keyrings/docker.gpg",
+            "echo \"deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
+            "sudo apt-get -y update",
+            "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
+        {% endif %}
+        ]
 }

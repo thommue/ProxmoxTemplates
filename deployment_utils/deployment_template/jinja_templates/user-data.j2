@@ -13,7 +13,11 @@ autoinstall:
     ssh_quiet_keygen: true
     allow_public_ssh_keys: true
   packages:
+{% if config.ubuntu_version == 'ubuntu-20-04-server' %}
     - sudo
+{% elif config.ubuntu_version == 'ubuntu-22-04-server-single' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' %}
+    - qemu-guest-agent
+{% endif %}
   storage:
     layout:
       name: direct
@@ -30,6 +34,8 @@ autoinstall:
         shell: /bin/bash
         ssh_authorized_keys:
           - {{ config.ssh_public_key }}
+{% if config.ubuntu_version == 'ubuntu-20-04-server' %}
   late-commands:
     - curtin in-target -- apt-get update
     - curtin in-target -- apt-get install qemu-guest-agent
+{% endif %}

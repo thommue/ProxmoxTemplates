@@ -103,7 +103,8 @@ def check_state(requred_field, optional_ssh_fields) -> PackerConfig:
             tags=template_tags,
             keyboard_layout=keyboard_layout,
             timezone=timezone,
-            tls_verification="true" if st.session_state.verify_ssl else "false"
+            tls_verification="true" if st.session_state.verify_ssl else "false",
+            additional_packages=[] if "None" in packages else packages
         )
         if optional_ssh_fields:
             packer_conf.ssh_username = ssh_username
@@ -156,7 +157,7 @@ if st.session_state.form_submitted and not st.session_state.form2_submitted:
             node_choices,
             placeholder="Choose nodes..."
         )
-        ubuntu_os_version = st.selectbox("Select the ubuntu os version", ["ubuntu-20-04-server", "ubuntu-22-04-server"], placeholder="ubuntu-20-04, ...")
+        ubuntu_os_version = st.selectbox("Select the ubuntu os version", ["ubuntu-20-04-server", "ubuntu-22-04-server-single", "ubuntu-22-04-server-terraform"], placeholder="ubuntu-20-04, ...")
         template_id = st.number_input("Template VM ID (the id will incrementally increase):", min_value=1, max_value=999, placeholder="900")
         template_name = st.text_input("Template name", placeholder="template-ubuntu-22-04")
         template_description = st.text_input("Template description", placeholder="Ubuntu 22.04 template ....")
@@ -185,7 +186,8 @@ if st.session_state.form_submitted and not st.session_state.form2_submitted:
         path_to_ssh_key_file = st.text_input("Path to your local ssh key file", placeholder="~/.ssh/homelab")
         ssh_public_key = st.text_input("Your public ssh key", placeholder="ssh-rsa xxxxxx")
 
-        packages = st.multiselect("Preinstall on template: ", ["None", "docker", "docker-compose"], placeholder="Select what you want...")
+        packages = st.multiselect(label="Preinstall on template: ", options=["None", "docker & docker-compose"],
+                                  default=["None"] ,placeholder="Select what you want...")
 
         # Check if all required fields are filled
         all_required_fields_filled = selected_nodes and template_id and template_name and template_description and template_tags and template_iso and disk_size and cores and keyboard_layout and memory and bridge and timezone

@@ -31,3 +31,4 @@ class PackerConfig(BaseModel):
     keyboard_layout: str
     timezone: str
     tls_verification: str
+    additional_packages: list[str]

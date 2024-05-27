@@ -115,6 +115,8 @@ def check_state(requred_field, optional_ssh_fields) -> PackerConfig:
         # for i in range(10):
         #     progress_text.text(f"Processing step {i + 1}/5...")
         #     time.sleep(1)  # Simulate a step taking time
+        # print("The packer conf")
+        # print(packer_conf)
         return packer_conf
 
 

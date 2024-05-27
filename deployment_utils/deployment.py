@@ -44,5 +44,6 @@ def deployment(conf: PackerConfig):
             # change back to root temp folder
             os.chdir(template_folder_path)
     finally:
-        remove_temp_folder(folder_path=folder_path)
+        # remove_temp_folder(folder_path=folder_path)
+        print("Finally!")
 

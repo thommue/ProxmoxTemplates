@@ -1,7 +1,7 @@
 # Packer Template to create an Image
 
 # Resource Definition for the VM Template
-source "proxmox" "ubuntu-server" {
+source "proxmox-iso" "ubuntu-server" {
 
     # Proxmox Connection Settings
     proxmox_url = "{{ config.proxmox_api_url }}"
@@ -31,7 +31,6 @@ source "proxmox" "ubuntu-server" {
         disk_size = "{{ config.disk_size }}"
         format = "raw"
         storage_pool = "{{ config.storage_pool }}"
-        storage_pool_type = "{{ config.storage_pool_type }}"
         type = "virtio"
     }
 
@@ -104,60 +103,61 @@ source "proxmox" "ubuntu-server" {
 # Build Definition to create the VM Template
 build {
 
-    name = "ubuntu-server"
-    sources = ["source.proxmox.ubuntu-server"]
+  name    = "ubuntu-server"
+  sources = ["source.proxmox.ubuntu-server"]
 
-    # Provisioning the VM Template for Cloud-Init Integration in Proxmox #1
-    provisioner "shell" {
-        inline = [
-        {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
-            "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
-        {% endif %}
-        {% if config.ubuntu_version == 'ubuntu-22-04-server-single' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' %}
-            "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
-            "NET_IFACE=$(ls /sys/class/net | grep -v lo | head -n 1)",
-            {% if config.ubuntu_version == 'ubuntu-22-04-server-single' %}
-            "sudo bash -c \"cat <<EOT > /etc/netplan/01-netcfg.yaml\nnetwork:\n  version: 2\n  renderer: networkd\n  ethernets:\n    $NET_IFACE:\n      dhcp4: true\nEOT\"",
-            {% endif %}
-            "sudo netplan apply",
-        {% endif %}
-            "sudo rm /etc/ssh/ssh_host_*",
-            "sudo truncate -s 0 /etc/machine-id",
-            "sudo apt -y autoremove --purge",
-            "sudo apt -y clean",
-            "sudo apt -y autoclean",
-            "sudo cloud-init clean --logs",
-        {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
-            "sudo rm -f /etc/cloud/cloud.cfg.d/subiquity-disable-cloudinit-networking.cfg",
-        {% endif %}
-            "sudo sync"
-        ]
-    }
+  # Provisioning the VM Template for Cloud-Init Integration in Proxmox #1
+  provisioner "shell" {
+    inline = [
+      {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
+      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
+      {% endif %}
+      {% if config.ubuntu_version == 'ubuntu-22-04-server-single' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' %}
+      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
+      "NET_IFACE=$(ls /sys/class/net | grep -v lo | head -n 1)",
+      {% if config.ubuntu_version == 'ubuntu-22-04-server-single' %}
+      "sudo bash -c \"cat <<EOT > /etc/netplan/01-netcfg.yaml\nnetwork:\n  version: 2\n  renderer: networkd\n  ethernets:\n    $NET_IFACE:\n      dhcp4: true\nEOT\"",
+      {% endif %}
+      "sudo netplan apply",
+      {% endif %}
+      "sudo rm /etc/ssh/ssh_host_*",
+      "sudo truncate -s 0 /etc/machine-id",
+      "sudo apt -y autoremove --purge",
+      "sudo apt -y clean",
+      "sudo apt -y autoclean",
+      "sudo cloud-init clean --logs",
+      {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
+      "sudo rm -f /etc/cloud/cloud.cfg.d/subiquity-disable-cloudinit-networking.cfg",
+      {% endif %}
+      "sudo sync"
+    ]
+  }
 
-    # Provisioning the VM Template for Cloud-Init Integration in Proxmox #2
-    provisioner "file" {
-        source = "files/99-pve.cfg"
-        destination = "/tmp/99-pve.cfg"
-    }
+  # Provisioning the VM Template for Cloud-Init Integration in Proxmox #2
+  provisioner "file" {
+    source      = "files/99-pve.cfg"
+    destination = "/tmp/99-pve.cfg"
+  }
 
-    # Provisioning the VM Template for Cloud-Init Integration in Proxmox #3
-    provisioner "shell" {
-        inline = [ "sudo cp /tmp/99-pve.cfg /etc/cloud/cloud.cfg.d/99-pve.cfg" ]
-    }
+  # Provisioning the VM Template for Cloud-Init Integration in Proxmox #3
+  provisioner "shell" {
+    inline = ["sudo cp /tmp/99-pve.cfg /etc/cloud/cloud.cfg.d/99-pve.cfg"]
+  }
 
-    # Add additional provisioning scripts here
-    provisioner "shell" {
-        inline = [
-            "sudo apt-get -y update",
-        {% if "docker & docker-compose" in conf.additional_packages %}
-            "sudo sysctl --system",
-            "sudo apt-get install -y ca-certificates curl gnupg",
-            "sudo install -m 0755 -d /etc/apt/keyrings",
-            "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
-            "sudo chmod a+r /etc/apt/keyrings/docker.gpg",
-            "echo \"deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
-            "sudo apt-get -y update",
-            "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
-        {% endif %}
-        ]
+  # Add additional provisioning scripts here
+  provisioner "shell" {
+    inline = [
+      "sudo apt-get -y update",
+      {% if "docker & docker-compose" in config.additional_packages %}
+      "sudo sysctl --system",
+      "sudo apt-get install -y ca-certificates curl gnupg",
+      "sudo install -m 0755 -d /etc/apt/keyrings",
+      "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
+      "sudo chmod a+r /etc/apt/keyrings/docker.gpg",
+      "echo \"deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
+      "sudo apt-get -y update",
+      "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
+      {% endif %}
+    ]
+  }
 }

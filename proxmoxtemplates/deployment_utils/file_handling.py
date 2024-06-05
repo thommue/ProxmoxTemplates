@@ -1,6 +1,6 @@
 import os
 import shutil
-from deployment_utils.create_obj import ProxmoxNode
+from .create_obj import ProxmoxNode
 
 
 def create_temp_folder(template_folder_path: str) -> str:

@@ -4,13 +4,16 @@ import time
 from io import StringIO
 from logging import Logger
 from streamlit.delta_generator import DeltaGenerator
-from deployment_utils.create_obj import PackerConfig
-from deployment_utils.file_handling import (
+from .create_obj import PackerConfig
+from .file_handling import (
     create_temp_folder,
     handle_node_file_structure,
     remove_temp_folder,
 )
-from deployment_utils.templating import render_packer_file, render_user_data
+from .templating import (
+    render_packer_file,
+    render_user_data,
+)
 
 
 def deployment(
@@ -67,8 +70,8 @@ def deployment(
                 text=True,
             )
 
-            while process.stdout.readline() != "" and process.poll() is None:
-                logger.info(f"{process.stdout.readline()}")
+            while process.stdout.readline() != "" and process.poll() is None:  # type: ignore
+                logger.info(f"{process.stdout.readline()}")  # type: ignore
                 placeholder.text(log_stream.getvalue())
 
             # change back to root temp folder

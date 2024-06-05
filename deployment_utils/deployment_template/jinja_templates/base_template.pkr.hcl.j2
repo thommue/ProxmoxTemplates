@@ -64,7 +64,7 @@ source "proxmox-iso" "ubuntu-server" {
         "--- <enter>"
     ]
   {% endraw %}
-    {% elif config.ubuntu_version == 'ubuntu-22-04-server-single' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' %}
+    {% elif config.ubuntu_version == 'ubuntu-22-04-server' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' or config.ubuntu_version == 'ubuntu-24-04-server' %}
         {% raw %}
     boot_command = [
         "c<wait>",
@@ -104,7 +104,7 @@ source "proxmox-iso" "ubuntu-server" {
 build {
 
   name    = "ubuntu-server"
-  sources = ["source.proxmox.ubuntu-server"]
+  sources = ["source.proxmox-iso.ubuntu-server"]
 
   # Provisioning the VM Template for Cloud-Init Integration in Proxmox #1
   provisioner "shell" {
@@ -112,10 +112,10 @@ build {
       {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
       {% endif %}
-      {% if config.ubuntu_version == 'ubuntu-22-04-server-single' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' %}
+      {% if config.ubuntu_version == 'ubuntu-22-04-server' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' or config.ubuntu_version == 'ubuntu-24-04-server' %}
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done",
       "NET_IFACE=$(ls /sys/class/net | grep -v lo | head -n 1)",
-      {% if config.ubuntu_version == 'ubuntu-22-04-server-single' %}
+      {% if config.ubuntu_version == 'ubuntu-22-04-server' or config.ubuntu_version == 'ubuntu-24-04-server'%}
       "sudo bash -c \"cat <<EOT > /etc/netplan/01-netcfg.yaml\nnetwork:\n  version: 2\n  renderer: networkd\n  ethernets:\n    $NET_IFACE:\n      dhcp4: true\nEOT\"",
       {% endif %}
       "sudo netplan apply",

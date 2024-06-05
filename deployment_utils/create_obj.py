@@ -23,9 +23,9 @@ class PackerConfig(BaseModel):
     memory: str
     network_bridge: str
     packer_bind_address: str
-    ssh_username: Optional[str] = None
-    path_to_ssh_key_file: Optional[str] = None
-    ssh_public_key: Optional[str] = None
+    ssh_username: str
+    path_to_ssh_key_file: str
+    ssh_public_key: str
     proxmox_nodes: List[ProxmoxNode]
     tags: str
     keyboard_layout: str

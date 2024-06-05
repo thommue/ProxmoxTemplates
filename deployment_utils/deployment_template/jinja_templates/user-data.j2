@@ -15,7 +15,7 @@ autoinstall:
   packages:
 {% if config.ubuntu_version == 'ubuntu-20-04-server' %}
     - sudo
-{% elif config.ubuntu_version == 'ubuntu-22-04-server-single' or config.ubuntu_version == 'ubuntu-22-04-server-terraform' %}
+{% else %}
     - qemu-guest-agent
 {% endif %}
   storage:
@@ -28,6 +28,7 @@ autoinstall:
     timezone: {{ config.timezone }}
     users:
       - name: {{ config.ssh_username }}
+        plain_text_passwd: 'pwd'
         groups: [adm, sudo]
         lock-passwd: false
         sudo: ALL=(ALL) NOPASSWD:ALL

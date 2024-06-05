@@ -10,11 +10,17 @@ def create_temp_folder(template_folder_path: str) -> str:
     return folder_path
 
 
-def handle_node_file_structure(root_template_path: str, folder_path: str, node: ProxmoxNode) -> str:
+def handle_node_file_structure(
+    root_template_path: str, folder_path: str, node: ProxmoxNode
+) -> str:
     tmp_path = os.path.join(folder_path, node.node_name)
     os.makedirs(tmp_path)
-    shutil.copytree(os.path.join(root_template_path, "files"), os.path.join(tmp_path, "files"))
-    shutil.copytree(os.path.join(root_template_path, "http"), os.path.join(tmp_path, "http"))
+    shutil.copytree(
+        os.path.join(root_template_path, "files"), os.path.join(tmp_path, "files")
+    )
+    shutil.copytree(
+        os.path.join(root_template_path, "http"), os.path.join(tmp_path, "http")
+    )
     return tmp_path
 
 

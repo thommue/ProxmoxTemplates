@@ -1,3 +1,4 @@
+import socket
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -44,3 +45,9 @@ class PackerConfig(BaseModel):
     timezone: str
     tls_verification: str
     additional_packages: list[str]
+
+
+def get_local_ip() -> str:
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    return local_ip

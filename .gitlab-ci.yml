@@ -26,7 +26,7 @@ build:
 
 
 deploy:
-  stage: deploy
+  stage: push
   script:
     - pip install twine
     - twine upload --repository-url $GITLAB_REGISTRY_URL dist/* -u $CI_JOB_TOKEN -p $CI_JOB_TOKEN

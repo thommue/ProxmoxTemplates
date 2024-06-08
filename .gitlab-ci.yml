@@ -17,6 +17,8 @@ before_script:
 
 mypy:
   stage: test
+  before_script:
+    - pip install -r requirements.txt
   script:
     - pip freeze
     - ls -a

@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="proxmoxtemplates",
-    version="0.1",
+    version="0.1.1",
     packages=find_packages(),
     install_requires=[
         "streamlit==1.34.0",

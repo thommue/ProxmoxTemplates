@@ -1,9 +1,11 @@
+import os
 from setuptools import setup, find_packages
 
+version_string = os.environ.get("PACKAGE_VERSION", "0.0.0.dev0")
 
 setup(
     name="proxmoxtemplates",
-    version="0.1.1",
+    version=str(version_string),
     packages=find_packages(),
     install_requires=[
         "streamlit==1.34.0",

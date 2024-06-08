@@ -1,5 +1,17 @@
-from typing import List, Optional
 from pydantic import BaseModel
+from typing import List, Optional
+
+
+class MyProxmox(BaseModel):
+    proxmox_url: str
+    proxmox_user: str
+    proxmox_api_token_name: str
+    proxmox_api_token_secret: str
+    verify_ssl: bool
+    proxmox_nodes: Optional[list[str]] = None
+    local_isos: Optional[list[str]] = None
+    storage_pools: Optional[list[str]] = None
+    network_bridges: Optional[list[str]] = None
 
 
 class ProxmoxNode(BaseModel):

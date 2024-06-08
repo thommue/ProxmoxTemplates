@@ -19,7 +19,7 @@ def get_local_isos_and_storage(proxmox) -> tuple[list[str], list[str]]:
     return iso_list, proxmox_storage
 
 
-def get_network_bridges(proxmox):
+def get_network_bridges(proxmox) -> list[str]:
     bridge_list = []
     for node in proxmox.nodes.get():
         network_list = proxmox.nodes(node["node"]).network.get()

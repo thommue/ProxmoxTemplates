@@ -21,7 +21,7 @@ def deployment(
     logger: Logger,
     placeholder: DeltaGenerator,
     log_stream: StringIO,
-):
+) -> None:
     # get the root path of this file
     root_path = os.path.dirname(os.path.abspath(__file__))
 

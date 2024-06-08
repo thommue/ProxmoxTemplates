@@ -2,6 +2,7 @@ image: python:3.11
 
 
 stages:
+  - test
   - build
   - push
 
@@ -12,6 +13,13 @@ variables:
 
 before_script:
   - pip install --upgrade pip
+
+
+mypy:
+  stage: test
+  script:
+    - pip freeze
+    - ls -a
 
 
 build:

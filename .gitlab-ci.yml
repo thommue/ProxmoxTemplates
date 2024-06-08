@@ -9,7 +9,6 @@ stages:
 
 variables:
   GITLAB_REGISTRY_URL: "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/packages/pypi"
-  PACKAGE_VERSION: "0.1.${CI_PIPELINE_IID}"
 
 
 before_script:
@@ -21,14 +20,13 @@ mypy:
   before_script:
     - pip install -r requirements.txt
   script:
-    - pip freeze
     - mypy proxmoxtemplates
 
 
 build:
   stage: build
   before_script:
-    - export $PACKAGE_VERSION
+    - export PACKAGE_VERSION="0.1.${CI_PIPELINE_IID}"
     - echo "Setting package version to $PACKAGE_VERSION"
   script:
     - pip install build

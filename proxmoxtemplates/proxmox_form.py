@@ -1,7 +1,10 @@
 import streamlit as st
-from proxmoxer import ProxmoxAPI
-from deployment_utils.create_obj import MyProxmox
-from proxmox_utils.utils import get_local_isos_and_storage, get_network_bridges
+from proxmoxer import ProxmoxAPI  # type: ignore
+from proxmoxtemplates.deployment_utils.create_obj import MyProxmox
+from proxmoxtemplates.proxmox_utils.utils import (
+    get_local_isos_and_storage,
+    get_network_bridges,
+)
 
 
 def handle_form_submit(my_proxmox: MyProxmox) -> MyProxmox:

@@ -1,7 +1,7 @@
 import streamlit as st
-from frontend_utils.utils import setup_logger
-from deployment_utils.deployment import deployment
-from deployment_utils.create_obj import PackerConfig, ProxmoxNode
+from proxmoxtemplates.frontend_utils.utils import setup_logger
+from proxmoxtemplates.deployment_utils.deployment import deployment
+from proxmoxtemplates.deployment_utils.create_obj import PackerConfig, ProxmoxNode
 
 
 def template_form() -> None:
@@ -107,12 +107,10 @@ def template_form() -> None:
             template_name,
             template_description,
             template_tags,
-            template_iso,
             disk_size,
             cores,
             keyboard_layout,
             memory,
-            bridge,
             timezone,
             ssh_username,
             path_to_ssh_key_file,
@@ -122,7 +120,14 @@ def template_form() -> None:
 
         template_submit = st.form_submit_button("Create Template(s)")
 
-        if template_submit and all_required_fields_filled:
+        if (
+            template_submit
+            and all_required_fields_filled
+            and ubuntu_os_version
+            and template_iso
+            and storage_pool
+            and bridge
+        ):
             placeholder_for_logger = st.empty()
             logger, log_stream = setup_logger()
             with st.spinner("Packer Deployment in progress..."):
@@ -147,7 +152,9 @@ def template_form() -> None:
                         path_to_ssh_key_file=path_to_ssh_key_file,
                         ssh_public_key=ssh_public_key,
                         proxmox_nodes=[
-                            ProxmoxNode(node_name=selected_node, vm_id=template_id + i)
+                            ProxmoxNode(
+                                node_name=selected_node, vm_id=int(template_id + i)
+                            )
                             for i, selected_node in enumerate(selected_nodes)
                         ],
                         tags=template_tags,

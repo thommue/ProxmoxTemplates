@@ -1,6 +1,6 @@
 import streamlit as st
-from proxmox_form import proxmox_form
-from template_form import template_form
+from proxmoxtemplates.proxmox_form import proxmox_form
+from proxmoxtemplates.template_form import template_form
 
 
 def initialize_session_state() -> None:

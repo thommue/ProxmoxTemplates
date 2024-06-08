@@ -19,6 +19,5 @@ setup(
             "proxmoxtemplates_app=bin.run_app:main",
         ],
     },
-    package_data={"proxmoxtemplates": ["deployment_utils/deployment_template/*"]},
     include_package_data=True,
 )

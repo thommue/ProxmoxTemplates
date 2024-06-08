@@ -29,6 +29,4 @@ deploy:
   stage: push
   script:
     - pip install twine
-    - twine upload --repository-url $GITLAB_REGISTRY_URL dist/* -u $CI_JOB_TOKEN -p $CI_JOB_TOKEN
-
-
+    - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --repository-url --repository-url $GITLAB_REGISTRY_URL dist/* --verbose

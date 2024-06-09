@@ -85,7 +85,7 @@ def template_form() -> None:
             timezone = st.text_input("Timezone", placeholder="Europe/Vienna")
 
         st.markdown(
-            "##### Optional settings for ssh access (can be leave blank if not needed):"
+            "##### Settings for ssh access (is needed for the packer connection):"
         )
 
         ssh_username = st.text_input("SSH Username", placeholder="TestSSH")

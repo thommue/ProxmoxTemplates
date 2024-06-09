@@ -40,6 +40,10 @@ def proxmox_form() -> None:
             "Token Secret:", placeholder="xxxxx-xxxx-..."
         )
 
+        local_ip = st.text_input(
+            "Your local IP to establish the connection:", placeholder="10.10.10.10"
+        )
+
         verify_ssl = st.checkbox("SSL True")
 
         submit_button = st.form_submit_button("Set Proxmox Connection")
@@ -52,6 +56,7 @@ def proxmox_form() -> None:
                 proxmox_api_token_name,
                 proxmox_api_token_secret,
                 verify_ssl,
+                local_ip,
             ]
         ):
             with st.spinner("Establishing the connection to proxmox..."):
@@ -62,6 +67,7 @@ def proxmox_form() -> None:
                         proxmox_api_token_name=proxmox_api_token_name,
                         proxmox_api_token_secret=proxmox_api_token_secret,
                         verify_ssl=verify_ssl,
+                        local_ip=local_ip,
                     )
                 )
                 st.session_state.my_proxmox = my_proxmox

@@ -1,4 +1,3 @@
-import socket
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -9,6 +8,7 @@ class MyProxmox(BaseModel):
     proxmox_api_token_name: str
     proxmox_api_token_secret: str
     verify_ssl: bool
+    local_ip: str
     proxmox_nodes: Optional[list[str]] = None
     local_isos: Optional[list[str]] = None
     storage_pools: Optional[list[str]] = None
@@ -45,9 +45,3 @@ class PackerConfig(BaseModel):
     timezone: str
     tls_verification: str
     additional_packages: list[str]
-
-
-def get_local_ip() -> str:
-    hostname = socket.gethostname()
-    local_ip = socket.gethostbyname(hostname)
-    return local_ip

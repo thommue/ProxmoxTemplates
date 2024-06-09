@@ -4,7 +4,6 @@ from proxmoxtemplates.deployment_utils.deployment import deployment
 from proxmoxtemplates.deployment_utils.create_obj import (
     PackerConfig,
     ProxmoxNode,
-    get_local_ip,
 )
 
 
@@ -151,7 +150,7 @@ def template_form() -> None:
                         cores=f"{cores}",
                         memory=f"{memory}",
                         network_bridge=bridge,
-                        packer_bind_address=get_local_ip(),
+                        packer_bind_address=st.session_state.my_proxmox.local_ip,
                         ssh_username=ssh_username,
                         path_to_ssh_key_file=path_to_ssh_key_file,
                         ssh_public_key=ssh_public_key,

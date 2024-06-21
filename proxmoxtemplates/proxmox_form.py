@@ -15,7 +15,7 @@ def handle_form_submit(my_proxmox: MyProxmox) -> MyProxmox:
         token_name=my_proxmox.proxmox_api_token_name,
         token_value=my_proxmox.proxmox_api_token_secret,
         verify_ssl=my_proxmox.verify_ssl,
-        timeout=20
+        timeout=20,
     )
     my_proxmox.proxmox_nodes = [node["node"] for node in proxmox.nodes.get()]
     my_proxmox.local_isos, my_proxmox.storage_pools = get_local_isos_and_storage(
@@ -45,7 +45,7 @@ def proxmox_form() -> None:
             "Your local IP to establish the connection:", placeholder="10.10.10.10"
         )
 
-        verify_ssl = st.checkbox("SSL True")
+        verify_ssl = st.checkbox("SSL True", value=False)
 
         submit_button = st.form_submit_button("Set Proxmox Connection")
 

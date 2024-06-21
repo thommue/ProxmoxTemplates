@@ -29,11 +29,11 @@ def main() -> None:
     time.sleep(1)
 
     print()
-    print("To quit the app, press 'c'.")
+    print("To quit the app, press 'strg + c'.")
     print()
 
-    # Listen for 'c' key press
-    keyboard.add_hotkey("c", lambda: process.terminate())
+    # Listen for 'strg+c' key press
+    keyboard.add_hotkey("ctrl+c", lambda: process.terminate())
 
     # Wait for the Streamlit app process to complete
     process.wait()
